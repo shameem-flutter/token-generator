@@ -1,20 +1,38 @@
 from django.http import JsonResponse
-from .models import Token
+from .models import Token, CompanyInfo
+from django.utils.timezone import localdate
 # Create your views here.
 
 
 
-def generate_token(request):
-    """Generate next token  number"""
-    last=Token.objects.order_by("-number").first()
-    next_number=last.number+1 if last else 1
+def generate_token(request,org_id):
+    org=CompanyInfo.objects.get(id= org_id)
+    settings=org.settings
+    
 
-    token=Token.objects.create(number=next_number)
+    # daily reset
+    if settings.daily_reset_enabled:
+        today=localdate()
+        last_token=Token.objects.filter(companyinfo=org).order_by("-created_at").first()
+
+
+        if last_token and last_token.created_at.date() != today:
+            next_number=1
+        else:
+            last=Token.objects.filter(companyinfo=org).order_by("-number").first()
+            next_number=last.number+1 if last else 1
+
+    else:
+        last= Token.objects.filter(companyinfo=org).order_by("-number").first()
+        next_number= last.number+1 if last else 1
+
+
+    token=Token.objects.create(organisation=org,number=next_number)
 
 
     return JsonResponse({
         "message":"Token generated",
-        "token":token.number,
+        "token":f"{settings.token_prefix}{token.number}",
         "id":token.id,
     })
 
@@ -46,9 +64,10 @@ def next_page(request):
         current.is_served=True
         current.save()
 
-
+ 
         return JsonResponse({"message":"Moved to next token"})
     
+
 
 
 def skip_token(request, token_id):
