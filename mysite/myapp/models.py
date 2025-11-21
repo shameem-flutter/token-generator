@@ -1,20 +1,39 @@
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils import timezone
 import uuid
+import random
+import string
 
+
+def generate_company_id(name):
+    """Generates ID like CLIN1234 or DENTAL9321"""
+    prefix = ''.join(e for e in name.upper() if e.isalnum())[:5]  
+    random_digits = ''.join(random.choices(string.digits, k=4))   
+    return f"{prefix}{random_digits}"
 
 class CompanyInfo(models.Model):
-    id=models.UUIDField(primary_key=True, default=uuid.uuid4,editable=False)
+    id=models.CharField(primary_key=True, max_length=20,editable=False)
     name=models.CharField(max_length=200)
     address=models.TextField(null=True,blank=True)
 
+    def save(self,*args,**kwargs):
+        if not self.id:
+            base_id = generate_company_id(self.name)
+            while CompanyInfo.objects.filter(id=base_id).exists():
+                base_id=generate_company_id(self.name)
+            self.id = base_id
+
+        super().save(*args,**kwargs)
+
 
     def __str__(self):
-        return self.name
+        return f"{self.name}({self.id})"
     
 
 class CompanySettings(models.Model):
-    organization = models.OneToOneField(CompanyInfo, on_delete=models.CASCADE,related_name='settings')
+    organisation = models.OneToOneField(CompanyInfo, on_delete=models.CASCADE,related_name='settings')
 
 
     # working hours
@@ -35,7 +54,7 @@ class CompanySettings(models.Model):
 
 
     def __str__(self):
-        return f"Settings for {self.organization.name}"
+        return f"Settings for {self.organisation.name}"
 
 
 
@@ -52,4 +71,10 @@ class Token(models.Model):
     is_skipped = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.organisation.settings.token_prefix}({self.number})"
+        return f"{self.organisation.settings.token_prefix}{self.number}"
+
+
+@receiver(post_save, sender=CompanyInfo)
+def create_company_settings(sender, instance, created, **kwargs):
+    if created:
+        CompanySettings.objects.create(organisation=instance)

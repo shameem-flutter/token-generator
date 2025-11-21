@@ -2,10 +2,10 @@ from django.urls import path
 from . import views
 
 urlpatterns =[
-    path("generate/",views.generate_token,),
-    path("track/<int:token_id>/",views.track_token),
+    path("generate/<str:org_id>/",views.generate_token,),
+    path("track/<uuid:token_id>/",views.track_token),
 
-    path("dashboard/",views.dashboard),
-    path("next/",views.next_page),
-    path("skip/<int:token_id>/",views.skip_token)
+    path("dashboard/<str:org_id>/",views.dashboard),
+    path("next/<str:org_id>/",views.next_token),
+    path("skip/<str:org_id>/<uuid:token_id>/",views.skip_token)
 ]
