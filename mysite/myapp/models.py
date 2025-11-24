@@ -13,6 +13,7 @@ def generate_company_id(name):
     random_digits = ''.join(random.choices(string.digits, k=4))   
     return f"{prefix}{random_digits}"
 
+
 class CompanyInfo(models.Model):
     id=models.CharField(primary_key=True, max_length=20,editable=False)
     name=models.CharField(max_length=200)
@@ -56,6 +57,13 @@ class CompanySettings(models.Model):
     def __str__(self):
         return f"Settings for {self.organisation.name}"
 
+class Branch(models.Model):
+    organisation = models.ForeignKey(CompanyInfo, on_delete=models.CASCADE, related_name="branches")
+    name = models.CharField(max_length=200)
+    prefix= models.CharField(max_length=10,default="",blank=True)
+
+    def __str__(self):
+        return f"{self.name}({self.organisation.id})"
 
 
 class Token(models.Model):
@@ -63,6 +71,7 @@ class Token(models.Model):
 
 
     organisation = models.ForeignKey(CompanyInfo,on_delete=models.CASCADE,related_name="tokens")   
+    branches= models.ForeignKey(Branch,on_delete=models.CASCADE,related_name="tokens")
     number = models.IntegerField()
     name = models.CharField(max_length=100, null=True, blank=True)
     phone = models.CharField(max_length=20, null=True, blank=True)
@@ -71,7 +80,11 @@ class Token(models.Model):
     is_skipped = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.organisation.settings.token_prefix}{self.number}"
+        return f"{self.branches.prefix}{self.number}"
+    
+
+
+    
 
 
 @receiver(post_save, sender=CompanyInfo)
