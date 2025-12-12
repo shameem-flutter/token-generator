@@ -1,12 +1,14 @@
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-key-here'
 
-DEBUG = True
+DEBUG = False   # always false in production
 
 ALLOWED_HOSTS = ["*"]
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -19,7 +21,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",   # ✅ ADDED
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -47,6 +50,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mysite.mysite.wsgi.application'
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -54,12 +58,28 @@ DATABASES = {
     }
 }
 
+
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = 'static/'
+
+# -----------------------------
+# STATIC FILES CONFIG FOR RENDER
+# -----------------------------
+
+STATIC_URL = '/static/'
+
+# Folder where collectstatic puts files
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Where your local static files live (optional but recommended)
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+# Whitenoise compressed storage
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
