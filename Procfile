@@ -1,1 +1,1 @@
-web: gunicorn token_generator.wsgi
+web: gunicorn mysite.wsgi
